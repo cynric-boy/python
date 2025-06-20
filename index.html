@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learn Python with Execution</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(to bottom right, #1f1f2e, #3b0a4f, #000);
+      color: white;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2em;
+      background: linear-gradient(to right, fuchsia, pink);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tab-button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background: #8e44ad;
+      color: white;
+      cursor: pointer;
+    }
+    .tab-button.active {
+      background: #a569bd;
+    }
+    .card {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
+    .card.active {
+      display: block;
+    }
+    button.option, .run-btn {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background: #2980b9;
+      color: white;
+      cursor: pointer;
+    }
+    button.option:hover, .run-btn:hover {
+      background: #3498db;
+    }
+    .CodeMirror {
+      height: auto;
+      border: 1px solid #444;
+      border-radius: 5px;
+      background-color: #1e1e1e;
+      color: white;
+    }
+    pre.output {
+      background: #111;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      color: #0f0;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Learn Python</h1>
+<div class="tabs">
+  <button class="tab-button active" onclick="showTab('basics')">Python Basics</button>
+  <button class="tab-button" onclick="showTab('advanced')">Advanced Python</button>
+  <button class="tab-button" onclick="showTab('functions')">Functions</button>
+  <button class="tab-button" onclick="showTab('oops')">OOP</button>
+</div>
+
+<div id="lessons"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+<script>
+  const lessons = [
+    {
+      id: "basics",
+      title: "Python Basics",
+      content: `Python is an interpreted, high-level, general-purpose programming language.
+
+Key Concepts:
+- Variables: Containers for storing data values.
+- Data Types: int, float, str, list, dict, etc.
+- Operators: Arithmetic (+, -, *), comparison (==, !=), logical (and, or).
+- Input/Output: Use input() and print() functions.
+
+Example:
+name = input("Enter your name: ")
+print("Hello,", name)`,
+      quiz: {
+        question: "What is the correct syntax to take input from the user in Python?",
+        options: ["input('Enter name')", "scan('Enter name')", "read('Enter name')", "get('Enter name')"],
+        answer: "input('Enter name')"
+      },
+      starterCode: "# Write a program to print Hello, World!\nprint('Hello, World!')"
+    },
+    {
+      id: "advanced",
+      title: "Advanced Python",
+      content: `Advanced concepts include:
+- List Comprehensions
+- Generators
+- Decorators
+- Context Managers
+
+Example:
+squares = [x*x for x in range(10)]
+print(squares)`,
+      quiz: {
+        question: "Which feature creates an iterable on the fly without storing all values in memory?",
+        options: ["List", "Tuple", "Generator", "Dictionary"],
+        answer: "Generator"
+      },
+      starterCode: "# Create a generator that yields numbers from 1 to 10\ndef gen():\n  for i in range(1,11):\n    yield i\nprint(list(gen()))"
+    },
+    {
+      id: "functions",
+      title: "Functions in Python",
+      content: `Functions help group reusable blocks of code.
+
+Key Concepts:
+- def keyword
+- Arguments and Return values
+- Scope (local and global)
+
+Example:
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Alice"))`,
+      quiz: {
+        question: "What keyword is used to define a function in Python?",
+        options: ["func", "define", "function", "def"],
+        answer: "def"
+      },
+      starterCode: "# Define a function that adds two numbers\ndef add(a, b):\n  return a + b\nprint(add(2, 3))"
+    },
+    {
+      id: "oops",
+      title: "Object-Oriented Programming",
+      content: `Python supports OOP principles like:
+- Classes and Objects
+- Encapsulation
+- Inheritance
+- Polymorphism
+
+Example:
+class Animal:
+    def speak(self):
+        print("Animal speaks")
+
+class Dog(Animal):
+    def speak(self):
+        print("Dog barks")
+
+d = Dog()
+d.speak()`,
+      quiz: {
+        question: "Which OOP principle allows a subclass to use methods from a parent class?",
+        options: ["Encapsulation", "Polymorphism", "Abstraction", "Inheritance"],
+        answer: "Inheritance"
+      },
+      starterCode: "# Create a class 'Car' with a method 'drive'\nclass Car:\n  def drive(self):\n    print('Driving')\nCar().drive()"
+    }
+  ];
+
+  const container = document.getElementById('lessons');
+
+  lessons.forEach(lesson => {
+    const div = document.createElement('div');
+    div.id = lesson.id;
+    div.className = 'card' + (lesson.id === "basics" ? " active" : "");
+    div.innerHTML = `
+      <h2>${lesson.title}</h2>
+      <pre>${lesson.content}</pre>
+      <p><b>Quiz:</b> ${lesson.quiz.question}</p>
+      <div>
+        ${lesson.quiz.options.map(opt => `<button class="option" onclick="checkAnswer(this, '${lesson.quiz.answer.replace(/'/g, "\'")}', '${lesson.id}-feedback')">${opt}</button>`).join('')}
+      </div>
+      <p id="${lesson.id}-feedback"></p>
+      <h3>Try it Yourself:</h3>
+      <textarea id="${lesson.id}-code">${lesson.starterCode}</textarea>
+      <button class="run-btn" onclick="runCode('${lesson.id}')">Run</button>
+      <pre class="output" id="${lesson.id}-output"></pre>
+    `;
+    container.appendChild(div);
+  });
+
+  let pyodideReady = false;
+  let pyodide = null;
+
+  async function loadPyodideAndPackages() {
+    pyodide = await loadPyodide();
+    pyodideReady = true;
+  }
+
+  loadPyodideAndPackages();
+
+  function showTab(id) {
+    document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function checkAnswer(button, correct, feedbackId) {
+    const feedback = document.getElementById(feedbackId);
+    if (button.innerText === correct) {
+      feedback.textContent = "Correct!";
+      feedback.style.color = "lime";
+    } else {
+      feedback.textContent = "Incorrect. Correct Answer: " + correct;
+      feedback.style.color = "red";
+    }
+    button.parentElement.querySelectorAll('button').forEach(b => b.disabled = true);
+  }
+
+  async function runCode(id) {
+    const code = document.getElementById(id + '-code').value;
+    const output = document.getElementById(id + '-output');
+    if (!pyodideReady) {
+      output.textContent = "Loading Python... please wait";
+      return;
+    }
+    try {
+      let result = await pyodide.runPythonAsync(code);
+      output.textContent = result === undefined ? '' : result.toString();
+    } catch (err) {
+      output.textContent = err;
+    }
+  }
+
+  // Enhance editors
+  window.addEventListener('load', () => {
+    lessons.forEach(lesson => {
+      CodeMirror.fromTextArea(document.getElementById(`${lesson.id}-code`), {
+        lineNumbers: true,
+        mode: "python",
+        theme: "default"
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
